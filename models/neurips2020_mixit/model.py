@@ -150,7 +150,7 @@ def conv_encoder(input_waveforms, samples_per_window, samples_per_hop,
     input_frames = input_frames[..., :expected_num_frames, :]
 
     encoder_coeffs = tf.keras.layers.Dense(
-        num_coeffs, activation='relu', use_bias=False).apply(input_frames)
+        num_coeffs, activation='relu', use_bias=False)(input_frames)
 
   return encoder_coeffs
 
@@ -187,7 +187,7 @@ def conv_decoder(input_coeffs, samples_per_window, samples_per_hop):
     # Multiply the decoder basis of shape (num_coeffs, samples_per_window) with
     # each frame.
     reconstructed_frames = tf.keras.layers.Dense(
-        samples_per_window, activation=None, use_bias=False).apply(input_coeffs)
+        samples_per_window, activation=None, use_bias=False)(input_coeffs)
     # reconstructed_frames is shape
     # (batch_size, depth, num_frames, samples_per_window).
 
@@ -237,7 +237,7 @@ def separate_waveforms(mixture_waveforms, hparams):
     mixture_coeffs_input = tf.abs(mixture_coeffs)
     mixture_coeffs_input = network.LayerNormalizationScalarParams(
         axis=[-3, -2, -1],
-        name='layer_norm_on_mag').apply(mixture_coeffs_input)
+        name='layer_norm_on_mag')(mixture_coeffs_input)
 
   shaper.register_axes(mixture_coeffs, ['batch', 'mic', 'frame', 'bin'])
   mixture_coeffs_input = shaper.change(mixture_coeffs_input[:, :, tf.newaxis],
