@@ -15,7 +15,7 @@
 
 # Define the ROOT_DIR variable which will hold all downloaded/generated data.
 # Uncomment next line.
-# ROOT_DIR=/data
+ROOT_DIR=/research/mc232/sound_datasets
 
 if [ x${ROOT_DIR} == x ]; then
   echo "Please define ROOT_DIR variable inside `dirname $0`/setup.sh."

@@ -28,14 +28,15 @@ echo "Start time : $start"
 
 SCRIPT_PATH=`dirname $0`
 
-source ${SCRIPT_PATH}/../../datasets/fuss/setup.sh
+# source ${SCRIPT_PATH}/../../datasets/fuss/setup.sh
 source ${SCRIPT_PATH}/setup.sh
 
 DATE=`date +%Y-%m-%d_%H-%M-%S`
-OUTPUT_DIR=${MODEL_DIR}/fuss/${DATE}
+OUTPUT_DIR=${MODEL_DIR}/tag/${DATE}
 mkdir -p ${OUTPUT_DIR}
 
-python3 ${SCRIPT_PATH}/train_model_on_fuss.py -dd=${DEV_DATA_DIR}/ssdata -md=${OUTPUT_DIR}
+TAG_DIR=/research/mc232/sound_datasets/tag-new/audio/
+python3 ${SCRIPT_PATH}/train_model_on_fuss.py -dd=${TAG_DIR} -md=${OUTPUT_DIR}
 
 end=$(date +"%T")
 echo "Start time: $start, installation end time: $end"

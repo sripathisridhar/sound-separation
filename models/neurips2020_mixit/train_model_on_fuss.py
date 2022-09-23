@@ -46,7 +46,7 @@ def main():
   roomsim_params = {
       'num_sources': len(hparams.signal_names),
       'num_receivers': 1,
-      'num_samples': int(hparams.sr * 10.0),
+      'num_samples': int(hparams.sr * 1.0),
   }
   tf.logging.info('Params: %s', roomsim_params.values())
 
@@ -68,10 +68,10 @@ def main():
       # Effective batch size of 3, since batches split in half to create MoMs.
       'train_batch_size': 2 * 3,
       'eval_batch_size': 2 * 3,
-      'train_steps': 20000000,
+      'train_steps': 200,
       'eval_suffix': 'validation',
       'eval_examples': 800,
-      'save_checkpoints_secs': 600,
+      'save_checkpoints_secs': 60,
       'save_summary_steps': 1000,
       'keep_checkpoint_every_n_hours': 4,
       'write_inference_graph': True,
@@ -79,9 +79,9 @@ def main():
   }
   tf.logging.info(params)
   params['input_data_train'] = data_io.read_lines_from_file(
-      params['input_data_train'], skip_fields=1)
+      params['input_data_train'], skip_fields=1, base_path=None)
   params['input_data_eval'] = data_io.read_lines_from_file(
-      params['input_data_eval'], skip_fields=1)
+      params['input_data_eval'], skip_fields=1, base_path=None)
   train_with_estimator.execute(model.model_fn, data_io.input_fn, **params)
 
 

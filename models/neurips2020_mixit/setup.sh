@@ -15,7 +15,7 @@
 
 # Define ROOT_DIR variable which will hold all downloaded/generated model data.
 # Uncomment next line and change to the directory for storing model data.
-# ROOT_DIR=/model_data
+ROOT_DIR=/research/mc232/models/owser/sound_separation
 # FUSS_ROOT_DIR=
 
 if [ x${ROOT_DIR} == x ]; then
@@ -23,10 +23,10 @@ if [ x${ROOT_DIR} == x ]; then
   exit 1
 fi
 
-if [ x${FUSS_ROOT_DIR} == x ]; then
-  echo "Please define FUSS_ROOT_DIR variable inside `dirname $0`/setup.sh."
-  exit 1
-fi
+# if [ x${FUSS_ROOT_DIR} == x ]; then
+#   echo "Please define FUSS_ROOT_DIR variable inside `dirname $0`/setup.sh."
+#   exit 1
+# fi
 
 # Download directory to download data into.
 # This can be set to /tmp if desired.
