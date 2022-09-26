@@ -406,93 +406,93 @@ def model_fn(features, labels, mode, params):
       loss,
       global_step=tf.compat.v1.train.get_or_create_global_step())
 
-  # Permute separated to match references for summaries.
-  unique_signal_types = list(set(hparams.signal_types))
-  loss_fns = {signal_type: log_mse_loss for signal_type in unique_signal_types}
-  _, separated_waveforms = groupwise.apply(
-      loss_fns, hparams.signal_types, source_waveforms, separated_waveforms,
-      unique_signal_types)
-  if mode == tf_estimator.ModeKeys.EVAL:
-    # Also align sources separated from single mixtures.
-    _, separated_waveforms_1mix = groupwise.apply(
-        loss_fns, hparams.signal_types, source_waveforms_1mix,
-        separated_waveforms_1mix, unique_signal_types)
+  # # Permute separated to match references for summaries.
+  # unique_signal_types = list(set(hparams.signal_types))
+  # loss_fns = {signal_type: log_mse_loss for signal_type in unique_signal_types}
+  # _, separated_waveforms = groupwise.apply(
+  #     loss_fns, hparams.signal_types, source_waveforms, separated_waveforms,
+  #     unique_signal_types)
+  # if mode == tf_estimator.ModeKeys.EVAL:
+  #   # Also align sources separated from single mixtures.
+  #   _, separated_waveforms_1mix = groupwise.apply(
+  #       loss_fns, hparams.signal_types, source_waveforms_1mix,
+  #       separated_waveforms_1mix, unique_signal_types)
 
-  # In eval mode, evaluate separated from single mixtures, instead of from MoMs.
-  if mode == tf_estimator.ModeKeys.EVAL:
-    separated_waveforms = separated_waveforms_1mix
-    source_waveforms = source_waveforms_1mix
-    mix_of_mix_waveforms = mixture_waveforms_1mix
+  # # In eval mode, evaluate separated from single mixtures, instead of from MoMs.
+  # if mode == tf_estimator.ModeKeys.EVAL:
+  #   separated_waveforms = separated_waveforms_1mix
+  #   source_waveforms = source_waveforms_1mix
+  #   mix_of_mix_waveforms = mixture_waveforms_1mix
 
-  # Compute spectrograms to be used in summaries.
-  transformer = signal_transformer.SignalTransformer(
-      sample_rate=hparams.sr,
-      window_time_seconds=hparams.ws,
-      hop_time_seconds=hparams.hs)
-  source_spectrograms = transformer.forward(source_waveforms)
-  mixture_spectrograms = transformer.forward(mix_of_mix_waveforms)
-  separated_spectrograms = transformer.forward(separated_waveforms)
+  # # Compute spectrograms to be used in summaries.
+  # transformer = signal_transformer.SignalTransformer(
+  #     sample_rate=hparams.sr,
+  #     window_time_seconds=hparams.ws,
+  #     hop_time_seconds=hparams.hs)
+  # source_spectrograms = transformer.forward(source_waveforms)
+  # mixture_spectrograms = transformer.forward(mix_of_mix_waveforms)
+  # separated_spectrograms = transformer.forward(separated_waveforms)
 
-  summary_dict = {}
+  # summary_dict = {}
 
-  # Audio summaries.
-  summary_dict['audio'] = summaries.compute_audio_summaries(
-      signal_names=hparams.signal_names,
-      separated_waveforms=separated_waveforms,
-      source_waveforms=source_waveforms,
-      mixture_waveforms=mix_of_mix_waveforms)
+  # # Audio summaries.
+  # summary_dict['audio'] = summaries.compute_audio_summaries(
+  #     signal_names=hparams.signal_names,
+  #     separated_waveforms=separated_waveforms,
+  #     source_waveforms=source_waveforms,
+  #     mixture_waveforms=mix_of_mix_waveforms)
 
-  # Spectrogram image summaries.
-  summary_dict['images'] = summaries.compute_spectrogram_summaries(
-      signal_names=hparams.signal_names,
-      separated_spectrograms=separated_spectrograms,
-      source_spectrograms=source_spectrograms,
-      mixture_spectrograms=mixture_spectrograms)
+  # # Spectrogram image summaries.
+  # summary_dict['images'] = summaries.compute_spectrogram_summaries(
+  #     signal_names=hparams.signal_names,
+  #     separated_spectrograms=separated_spectrograms,
+  #     source_spectrograms=source_spectrograms,
+  #     mixture_spectrograms=mixture_spectrograms)
 
-  scalars = {}
-  weights = {}
-  # Only compute scalar summaries for nonzero reference sources.
-  source_is_nonzero = _weights_for_nonzero_refs(source_waveforms)
+  # scalars = {}
+  # weights = {}
+  # # Only compute scalar summaries for nonzero reference sources.
+  # source_is_nonzero = _weights_for_nonzero_refs(source_waveforms)
 
-  # Metrics for single-source examples.
-  weights_1src = tf.logical_and(
-      source_is_nonzero,
-      _weights_for_num_sources(source_waveforms, 1))
-  scalars_1src, weights_1src = summaries.scalar_snr_metrics_weighted(
-      hparams.signal_names,
-      separated_waveforms,
-      source_waveforms,
-      mix_of_mix_waveforms,
-      weights_1src)
-  scalars.update({name + '_1src_ref_nonzero': value
-                  for name, value in scalars_1src.items()})
-  weights.update({name + '_1src_ref_nonzero': value
-                  for name, value in weights_1src.items()})
+  # # Metrics for single-source examples.
+  # weights_1src = tf.logical_and(
+  #     source_is_nonzero,
+  #     _weights_for_num_sources(source_waveforms, 1))
+  # scalars_1src, weights_1src = summaries.scalar_snr_metrics_weighted(
+  #     hparams.signal_names,
+  #     separated_waveforms,
+  #     source_waveforms,
+  #     mix_of_mix_waveforms,
+  #     weights_1src)
+  # scalars.update({name + '_1src_ref_nonzero': value
+  #                 for name, value in scalars_1src.items()})
+  # weights.update({name + '_1src_ref_nonzero': value
+  #                 for name, value in weights_1src.items()})
 
-  # Metrics for multi-source examples.
-  max_sources = len(hparams.signal_names)
-  if max_sources > 1:
-    weights_multisource = _weights_for_num_sources(source_waveforms, 2)
-    for num_sources in range(3, max_sources + 1):
-      weights_multisource = tf.logical_or(
-          weights_multisource,
-          _weights_for_num_sources(source_waveforms, num_sources))
-    weights_multisource = tf.logical_and(source_is_nonzero, weights_multisource)
-    scalars_msrc, weights_msrc = summaries.scalar_snr_metrics_weighted(
-        hparams.signal_names,
-        separated_waveforms,
-        source_waveforms,
-        mix_of_mix_waveforms,
-        weights_multisource)
-    scalars.update({name + '_min2src_ref_nonzero': value
-                    for name, value in scalars_msrc.items()})
-    weights.update({name + '_min2src_ref_nonzero': value
-                    for name, value in weights_msrc.items()})
-
-  summary_dict['scalars'] = scalars
-  summary_util.create_summaries(sample_rate=hparams.sr, **summary_dict)
-  metrics = {name: tf.metrics.mean(s, weights=weights.get(name, None))
-             for name, s in scalars.items()}
+  # # Metrics for multi-source examples.
+  # max_sources = len(hparams.signal_names)
+  # if max_sources > 1:
+  #   weights_multisource = _weights_for_num_sources(source_waveforms, 2)
+  #   for num_sources in range(3, max_sources + 1):
+  #     weights_multisource = tf.logical_or(
+  #         weights_multisource,
+  #         _weights_for_num_sources(source_waveforms, num_sources))
+  #   weights_multisource = tf.logical_and(source_is_nonzero, weights_multisource)
+  #   scalars_msrc, weights_msrc = summaries.scalar_snr_metrics_weighted(
+  #       hparams.signal_names,
+  #       separated_waveforms,
+  #       source_waveforms,
+  #       mix_of_mix_waveforms,
+  #       weights_multisource)
+  #   scalars.update({name + '_min2src_ref_nonzero': value
+  #                   for name, value in scalars_msrc.items()})
+  #   weights.update({name + '_min2src_ref_nonzero': value
+  #                   for name, value in weights_msrc.items()})
+  
+  # summary_dict['scalars'] = scalars
+  # summary_util.create_summaries(sample_rate=hparams.sr, **summary_dict)
+  # metrics = {name: tf.metrics.mean(s, weights=weights.get(name, None))
+  #            for name, s in scalars.items()}
 
   logging_hook = tf.train.LoggingTensorHook({'loss': loss}, every_n_secs=10)
 
@@ -500,6 +500,6 @@ def model_fn(features, labels, mode, params):
       mode=mode,
       predictions=predictions,
       loss=loss,
-      eval_metric_ops=metrics,
+      eval_metric_ops={},
       train_op=train_op,
       training_hooks=[logging_hook])
