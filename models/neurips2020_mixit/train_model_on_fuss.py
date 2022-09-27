@@ -15,6 +15,8 @@
 
 
 import argparse
+import glob
+from os.path import join
 import os
 import sys
 
@@ -72,16 +74,19 @@ def main():
       'eval_suffix': 'validation',
       'eval_examples': 800,
       'save_checkpoints_secs': 60,
-      'save_summary_steps': 1000,
+      'save_summary_steps': None,
       'keep_checkpoint_every_n_hours': 4,
       'write_inference_graph': True,
       'randomize_training': True,
   }
   tf.logging.info(params)
-  params['input_data_train'] = data_io.read_lines_from_file(
-      params['input_data_train'], skip_fields=1, base_path=None)
-  params['input_data_eval'] = data_io.read_lines_from_file(
-      params['input_data_eval'], skip_fields=1, base_path=None)
+  all_wav_paths = glob.glob(join(args.data_dir, '*/*/*/*.wav'))
+  params['input_data_train'] = all_wav_paths[:100]
+  params['input_data_eval'] = all_wav_paths[100:200]
+#   params['input_data_train'] = data_io.read_lines_from_file(
+#       params['input_data_train'], skip_fields=1, base_path=None)
+#   params['input_data_eval'] = data_io.read_lines_from_file(
+#       params['input_data_eval'], skip_fields=1, base_path=None)
   train_with_estimator.execute(model.model_fn, data_io.input_fn, **params)
 
 
