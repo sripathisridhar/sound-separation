@@ -55,8 +55,12 @@ def main():
   feature_spec = data_io.get_roomsim_spec(**roomsim_params)
   inference_spec = data_io.get_inference_spec()
 
-  train_list = os.path.join(args.data_dir, 'train_example_list.txt')
-  validation_list = os.path.join(args.data_dir, 'validation_example_list.txt')
+  file_list = glob(join(args.data_dir, '*/*/*/*.wav'))
+  validation_paths = glob(join(args.data_dir, '*/fold1/val/*.wav'))
+  train_paths = list(set(file_list) - set(validation_paths))
+
+  assert set(train_paths).isdisjoint(set(validation_paths))
+  assert set(train_paths).union(set(validation_paths)) == set(file_list)
 
   params = {
       'feature_spec': feature_spec,
@@ -64,8 +68,8 @@ def main():
       'hparams': hparams,
       'io_params': {'parallel_readers': 512,
                     'num_samples': int(hparams.sr * 10.0)},
-      'input_data_train': train_list,
-      'input_data_eval': validation_list,
+      'input_data_train': train_paths,
+      'input_data_eval': validation_paths,
       'model_dir': args.model_dir,
       # Effective batch size of 3, since batches split in half to create MoMs.
       'train_batch_size': 2 * 3,
@@ -80,15 +84,7 @@ def main():
       'randomize_training': True,
   }
   tf.logging.info(params)
-  file_list = glob(join(args.data_dir, '*/*/*/*.wav'))
-  validation_paths = glob(join(args.data_dir, '*/fold1/val/*.wav'))
-  train_paths = list(set(file_list) - set(validation_paths))
 
-  assert set(train_paths).isdisjoint(set(validation_paths))
-  assert set(train_paths).union(set(validation_paths)) == set(file_list)
-
-  params['input_data_train'] = train_paths
-  params['input_data_eval'] = validation_paths
 #   params['input_data_train'] = data_io.read_lines_from_file(
 #       params['input_data_train'], skip_fields=1, base_path=None)
 #   params['input_data_eval'] = data_io.read_lines_from_file(
