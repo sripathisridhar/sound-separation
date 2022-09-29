@@ -55,8 +55,8 @@ def main():
   feature_spec = data_io.get_roomsim_spec(**roomsim_params)
   inference_spec = data_io.get_inference_spec()
 
-  file_list = glob(join(args.data_dir, '*/*/*/*.wav'))
-  validation_paths = glob(join(args.data_dir, 'mid/fold1/val/*.wav'))
+  file_list = glob.glob(join(args.data_dir, '*/*/*/*.wav'))
+  validation_paths = glob.glob(join(args.data_dir, 'mid/fold1/val/*.wav'))
   train_paths = list(set(file_list) - set(validation_paths))
 
   assert set(train_paths).isdisjoint(set(validation_paths))
