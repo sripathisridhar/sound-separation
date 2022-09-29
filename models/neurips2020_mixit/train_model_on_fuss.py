@@ -56,7 +56,7 @@ def main():
   inference_spec = data_io.get_inference_spec()
 
   file_list = glob(join(args.data_dir, '*/*/*/*.wav'))
-  validation_paths = glob(join(args.data_dir, '*/fold1/val/*.wav'))
+  validation_paths = glob(join(args.data_dir, 'mid/fold1/val/*.wav'))
   train_paths = list(set(file_list) - set(validation_paths))
 
   assert set(train_paths).isdisjoint(set(validation_paths))
@@ -67,17 +67,17 @@ def main():
       'inference_spec': inference_spec,
       'hparams': hparams,
       'io_params': {'parallel_readers': 512,
-                    'num_samples': int(hparams.sr * 10.0)},
+                    'num_samples': int(hparams.sr * 1.0)},
       'input_data_train': train_paths,
       'input_data_eval': validation_paths,
       'model_dir': args.model_dir,
       # Effective batch size of 3, since batches split in half to create MoMs.
       'train_batch_size': 2 * 3,
       'eval_batch_size': 2 * 3,
-      'train_steps': 200,
+      'train_steps': int(1e6),
       'eval_suffix': 'validation',
-      'eval_examples': 800,
-      'save_checkpoints_secs': 60,
+      'eval_examples': int(5e4),
+      'save_checkpoints_secs': 3600,
       'save_summary_steps': None,
       'keep_checkpoint_every_n_hours': 4,
       'write_inference_graph': True,

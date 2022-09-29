@@ -57,7 +57,7 @@ def execute(model_fn, input_fn, **params):
 
   eval_spec = tf_estimator.EvalSpec(
       name=params['eval_suffix'], input_fn=eval_input_fn, steps=eval_steps,
-      throttle_secs=params.get('eval_throttle_secs', 600))
+      throttle_secs=params.get('eval_throttle_secs', 10800)) # eval every 3 hours
 
   run_config = tf_estimator.RunConfig(
       model_dir=params['model_dir'],
