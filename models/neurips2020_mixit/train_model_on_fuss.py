@@ -80,9 +80,15 @@ def main():
       'randomize_training': True,
   }
   tf.logging.info(params)
-  all_wav_paths = glob.glob(join(args.data_dir, '*/*/*/*.wav'))
-  params['input_data_train'] = all_wav_paths[:100]
-  params['input_data_eval'] = all_wav_paths[100:200]
+  file_list = glob(join(args.data_dir, '*/*/*/*.wav'))
+  validation_paths = glob(join(args.data_dir, '*/fold1/val/*.wav'))
+  train_paths = list(set(file_list) - set(validation_paths))
+
+  assert set(train_paths).isdisjoint(set(validation_paths))
+  assert set(train_paths).union(set(validation_paths)) == set(file_list)
+
+  params['input_data_train'] = train_paths
+  params['input_data_eval'] = validation_paths
 #   params['input_data_train'] = data_io.read_lines_from_file(
 #       params['input_data_train'], skip_fields=1, base_path=None)
 #   params['input_data_eval'] = data_io.read_lines_from_file(
