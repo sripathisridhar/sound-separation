@@ -72,8 +72,8 @@ def main():
       'input_data_eval': validation_paths,
       'model_dir': args.model_dir,
       # Effective batch size of 3, since batches split in half to create MoMs.
-      'train_batch_size': 2 * 3,
-      'eval_batch_size': 2 * 3,
+      'train_batch_size': 2 * 8,
+      'eval_batch_size': 2 * 8,
       'train_steps': int(1e6),
       'eval_suffix': 'validation',
       'eval_examples': int(5e4),
