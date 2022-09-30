@@ -68,8 +68,8 @@ def main():
       'hparams': hparams,
       'io_params': {'parallel_readers': 512,
                     'num_samples': int(hparams.sr * 1.0)},
-      'input_data_train': train_paths,
-      'input_data_eval': validation_paths,
+      'input_data_train': len(train_paths),
+      'input_data_eval': len(validation_paths),
       'model_dir': args.model_dir,
       # Effective batch size of 3, since batches split in half to create MoMs.
       'train_batch_size': 2 * 8,
@@ -84,7 +84,8 @@ def main():
       'randomize_training': True,
   }
   tf.logging.info(params)
-
+  params['input_data_train'] = train_paths
+  params['input_data_eval'] = validation_paths
 #   params['input_data_train'] = data_io.read_lines_from_file(
 #       params['input_data_train'], skip_fields=1, base_path=None)
 #   params['input_data_eval'] = data_io.read_lines_from_file(
