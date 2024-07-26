@@ -15,7 +15,7 @@
 
 # Define ROOT_DIR variable which will hold all downloaded/generated model data.
 # Uncomment next line and change to the directory for storing model data.
-ROOT_DIR=/research/mc232/models/owser/sound_separation
+ROOT_DIR=/media/data2/projects/openworld/models/mixit_uss/
 # FUSS_ROOT_DIR=
 
 if [ x${ROOT_DIR} == x ]; then
