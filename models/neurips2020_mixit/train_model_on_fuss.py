@@ -23,6 +23,7 @@ import sys
 import tensorflow.compat.v1 as tf
 
 import model
+
 cur_path = os.path.dirname(os.path.realpath(__file__))
 parent_path = os.path.dirname(os.path.dirname(os.path.dirname(cur_path)))
 sys.path.append(os.path.join(parent_path))
@@ -31,67 +32,81 @@ from train import train_with_estimator
 
 
 def main():
-  tf.logging.set_verbosity(tf.logging.INFO)
-  parser = argparse.ArgumentParser(
-      description='Train the MixIT separation model on FUSS.')
-  parser.add_argument(
-      '-dd', '--data_dir', help='Data directory.',
-      required=True)
-  parser.add_argument(
-      '-md', '--model_dir', help='Directory for checkpoints and summaries.',
-      required=True)
-  args = parser.parse_args()
+    tf.logging.set_verbosity(tf.logging.INFO)
+    parser = argparse.ArgumentParser(
+        description="Train the MixIT separation model on FUSS."
+    )
+    parser.add_argument("-dd", "--data_dir", help="Data directory.", required=True)
+    parser.add_argument(
+        "-md",
+        "--model_dir",
+        help="Directory for checkpoints and summaries.",
+        required=True,
+    )
+    args = parser.parse_args()
 
-  hparams = model.get_model_hparams()
-  hparams.sr = 16000.0
+    hparams = model.get_model_hparams()
+    hparams.sr = 16000.0
 
-  roomsim_params = {
-      'num_sources': len(hparams.signal_names),
-      'num_receivers': 1,
-      'num_samples': int(hparams.sr * 1.0),
-  }
-  tf.logging.info('Params: %s', roomsim_params.values())
+    roomsim_params = {
+        "num_sources": len(hparams.signal_names),
+        "num_receivers": 1,
+        "num_samples": int(hparams.sr * 10.0),
+    }
+    tf.logging.info("Params: %s", roomsim_params.values())
 
-  feature_spec = data_io.get_roomsim_spec(**roomsim_params)
-  inference_spec = data_io.get_inference_spec()
+    feature_spec = data_io.get_roomsim_spec(**roomsim_params)
+    inference_spec = data_io.get_inference_spec()
 
-  file_list = glob.glob(join(args.data_dir, '*/*/*/*.wav'))
-  validation_paths = glob.glob(join(args.data_dir, 'mid/fold1/val/*.wav'))
-  train_paths = list(set(file_list) - set(validation_paths))
+    # Update depending on the dataset!
+    # for OST-tiny, train has no subdirectories. val and test have kk/seen, kk/unseen, uu/ subdirectories
+    # file_list = (
+    #     glob.glob(join(args.data_dir, "*/*/*/*.wav"))
+    #     + glob.glob(join(args.data_dir, "*/*/*/*/*/*.wav"))
+    #     + glob.glob(join(args.data_dir, "*/*/*/*/*.wav"))
+    # )
+    # validation_paths = glob.glob(join(args.data_dir, "high/fold1/val/kk/*/*.wav"))
 
-  assert set(train_paths).isdisjoint(set(validation_paths))
-  assert set(train_paths).union(set(validation_paths)) == set(file_list)
+    # FUSS
+    file_list = glob.glob(join(args.data_dir, "*/*.wav"))
+    validation_paths = glob.glob(join(args.data_dir, "validation/*.wav"))
+    train_paths = list(set(file_list) - set(validation_paths))
 
-  params = {
-      'feature_spec': feature_spec,
-      'inference_spec': inference_spec,
-      'hparams': hparams,
-      'io_params': {'parallel_readers': 512,
-                    'num_samples': int(hparams.sr * 1.0)},
-      'input_data_train': len(train_paths),
-      'input_data_eval': len(validation_paths),
-      'model_dir': args.model_dir,
-      # Effective batch size of 3, since batches split in half to create MoMs.
-      'train_batch_size': 2 * 8,
-      'eval_batch_size': 2 * 8,
-      'train_steps': int(1e6),
-      'eval_suffix': 'validation',
-      'eval_examples': int(5e4),
-      'save_checkpoints_secs': 3600,
-      'save_summary_steps': None,
-      'keep_checkpoint_every_n_hours': 4,
-      'write_inference_graph': True,
-      'randomize_training': True,
-  }
-  tf.logging.info(params)
-  params['input_data_train'] = train_paths
-  params['input_data_eval'] = validation_paths
-#   params['input_data_train'] = data_io.read_lines_from_file(
-#       params['input_data_train'], skip_fields=1, base_path=None)
-#   params['input_data_eval'] = data_io.read_lines_from_file(
-#       params['input_data_eval'], skip_fields=1, base_path=None)
-  train_with_estimator.execute(model.model_fn, data_io.input_fn, **params)
+    assert set(train_paths).isdisjoint(set(validation_paths))
+    assert set(train_paths).union(set(validation_paths)) == set(file_list)
+    # train_list = os.path.join(args.data_dir, 'train_example_list.txt')
+    # validation_list = os.path.join(args.data_dir, 'validation_example_list.txt')
 
 
-if __name__ == '__main__':
-  main()
+    params = {
+        "feature_spec": feature_spec,
+        "inference_spec": inference_spec,
+        "hparams": hparams,
+        "io_params": {"parallel_readers": 64, "num_samples": int(hparams.sr * 10.0)},
+        "input_data_train": len(train_paths), #train_list
+        "input_data_eval": len(validation_paths), #validation_list
+        "model_dir": args.model_dir,
+        # Effective batch size of 3, since batches split in half to create MoMs.
+        "train_batch_size": 2 * 3,
+        "eval_batch_size": 2 * 3,
+        "train_steps": int(1e6),
+        "eval_suffix": "validation",
+        "eval_examples": int(1e4),
+        "save_checkpoints_secs": 3600,
+        "save_summary_steps": None,
+        "keep_checkpoint_every_n_hours": 4,
+        "write_inference_graph": True,
+        "randomize_training": True,
+    }
+    tf.logging.info(params)
+    params["input_data_train"] = train_paths
+    params["input_data_eval"] = validation_paths
+    # params['input_data_train'] = data_io.read_lines_from_file(
+    #     params['input_data_train'], skip_fields=1, base_path=None)
+    # params['input_data_eval'] = data_io.read_lines_from_file(
+    #     params['input_data_eval'], skip_fields=1, base_path=None)
+    train_with_estimator.execute(model.model_fn, data_io.input_fn, **params)
+
+
+if __name__ == "__main__":
+    main()
